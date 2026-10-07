@@ -1,133 +1,58 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
 namespace KaisarMMO.UI
 {
+    // Built-in Unity GUI only: no UnityEngine.UI dependency.
     public class MainMenuController : MonoBehaviour
     {
-        Font font;
+        static MainMenuController instance;
+        bool visible = true;
 
-        void Awake()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Create()
         {
-            // Keep the existing game/theme untouched. This only creates the startup UI.
-            Application.targetFrameRate = 60;
-            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font == null)
-                font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
-
-        void Start()
-        {
-            EnsureEventSystem();
-            BuildMenu();
-        }
-
-        void EnsureEventSystem()
-        {
-            if (EventSystem.current != null) return;
-            var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            if (instance != null) return;
+            var go = new GameObject("KaisarMMO_MainMenu");
             DontDestroyOnLoad(go);
+            instance = go.AddComponent<MainMenuController>();
         }
 
-        void BuildMenu()
+        void OnGUI()
         {
-            var canvasGO = new GameObject("MainMenuCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            var canvas = canvasGO.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 100;
+            if (!visible) return;
 
-            var scaler = canvasGO.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1080, 1920);
-            scaler.matchWidthOrHeight = 0.5f;
+            // Keep the existing 3D scene, character, lighting and theme untouched.
+            float w = Mathf.Min(520f, Screen.width * 0.78f);
+            float h = 70f;
+            float x = (Screen.width - w) * 0.5f;
+            float y = Screen.height * 0.50f;
 
-            var bg = MakeImage(canvas.transform, "Background", new Color(0.025f, 0.035f, 0.06f, 1f));
-            Stretch(bg.rectTransform);
+            GUIStyle title = new GUIStyle(GUI.skin.label) {
+                fontSize = Mathf.Clamp(Screen.width / 18, 28, 56),
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Bold
+            };
+            GUIStyle button = new GUIStyle(GUI.skin.button) {
+                fontSize = Mathf.Clamp(Screen.width / 32, 20, 34)
+            };
 
-            var title = MakeText(canvas.transform, "Title", "KAISAR MMO", 64, TextAnchor.MiddleCenter);
-            SetRect(title.rectTransform, new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), new Vector2(0,150), new Vector2(620,100));
+            GUI.Label(new Rect(x, y - 145, w, 70), "KAISAR MMO", title);
 
-            var subtitle = MakeText(canvas.transform, "Subtitle", "3D ONLINE ADVENTURE", 22, TextAnchor.MiddleCenter);
-            SetRect(subtitle.rectTransform, new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), new Vector2(0,88), new Vector2(620,55));
+            if (GUI.Button(new Rect(x, y - 45, w, h), "GAMES", button))
+                StartGame();
 
-            MakeButton(canvas.transform, "GAMES", "GAMES", 0, StartGame);
-            MakeButton(canvas.transform, "SETTINGS", "SETTINGS", 1, ShowSettings);
-            MakeButton(canvas.transform, "EXIT", "EXIT", 2, QuitGame);
+            if (GUI.Button(new Rect(x, y + 40, w, h), "SETTINGS", button))
+                Debug.Log("Settings: existing game settings are unchanged.");
 
-            var info = MakeText(canvas.transform, "Info", "TEGARIS82 • MOBILE MMO", 18, TextAnchor.MiddleCenter);
-            SetRect(info.rectTransform, new Vector2(0.5f,0), new Vector2(0.5f,0), new Vector2(0,45), new Vector2(620,50));
-        }
-
-        Image MakeImage(Transform parent, string name, Color color)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            go.GetComponent<Image>().color = color;
-            return go.GetComponent<Image>();
-        }
-
-        Text MakeText(Transform parent, string name, string value, int size, TextAnchor anchor)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
-            go.transform.SetParent(parent, false);
-            var t = go.GetComponent<Text>();
-            t.font = font;
-            t.text = value;
-            t.fontSize = size;
-            t.alignment = anchor;
-            t.color = Color.white;
-            t.horizontalOverflow = HorizontalWrapMode.Overflow;
-            t.verticalOverflow = VerticalWrapMode.Overflow;
-            return t;
-        }
-
-        void MakeButton(Transform parent, string name, string label, int index, UnityEngine.Events.UnityAction action)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            var rt = go.GetComponent<RectTransform>();
-            SetRect(rt, new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), new Vector2(0, 10-index*82), new Vector2(420,62));
-
-            var image = go.GetComponent<Image>();
-            image.color = new Color(0.10f,0.22f,0.38f,1f);
-            var button = go.GetComponent<Button>();
-            button.onClick.AddListener(action);
-
-            var text = MakeText(go.transform, "Label", label, 25, TextAnchor.MiddleCenter);
-            Stretch(text.rectTransform);
+            if (GUI.Button(new Rect(x, y + 125, w, h), "EXIT", button))
+                Application.Quit();
         }
 
         void StartGame()
         {
+            visible = false;
             SceneManager.LoadScene("KaisarWorld");
-        }
-
-        void ShowSettings()
-        {
-            Debug.Log("Settings menu coming soon.");
-        }
-
-        void QuitGame()
-        {
-            Application.Quit();
-        }
-
-        void Stretch(RectTransform r)
-        {
-            r.anchorMin = Vector2.zero;
-            r.anchorMax = Vector2.one;
-            r.offsetMin = Vector2.zero;
-            r.offsetMax = Vector2.zero;
-        }
-
-        void SetRect(RectTransform r, Vector2 min, Vector2 max, Vector2 pos, Vector2 size)
-        {
-            r.anchorMin = min;
-            r.anchorMax = max;
-            r.anchoredPosition = pos;
-            r.sizeDelta = size;
         }
     }
 }

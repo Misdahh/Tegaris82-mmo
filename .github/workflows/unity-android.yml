@@ -1,0 +1,35 @@
+name: Build tegaris82 Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-android:
+    name: Build APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Android APK
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: .
+          unityVersion: 6000.0.43f1
+          targetPlatform: Android
+          buildMethod: UnityEditor.BuildPipeline.BuildPlayer
+          buildsPath: build
+          customParameters: -quit -batchmode
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tegaris82-android
+          path: build/**/*.apk
+          if-no-files-found: error

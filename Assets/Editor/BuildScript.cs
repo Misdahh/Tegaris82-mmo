@@ -3,63 +3,30 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
-using UnityEngine;
 
 public static class BuildScript
 {
     public static void BuildAndroid()
     {
-        // Find all Unity scenes in the project.
-        string[] sceneGuids = AssetDatabase.FindAssets("t:Scene");
+        string[] sceneGuids = AssetDatabase.FindAssets("t:Scene", new[] { "Assets/Scenes" });
+        var scenes = sceneGuids.Select(AssetDatabase.GUIDToAssetPath)
+            .Where(p => p.EndsWith(".unity"))
+            .OrderBy(p => p == "Assets/Scenes/MainMenu.unity" ? 0 : 1)
+            .ThenBy(p => p)
+            .ToArray();
 
-        if (sceneGuids == null || sceneGuids.Length == 0)
-        {
-            throw new BuildFailedException(
-                "No Unity scene was found. Create and save a scene under Assets/Scenes/ first.");
-        }
+        if (scenes.Length == 0)
+            throw new BuildFailedException("No Unity scenes found under Assets/Scenes.");
 
-        // Prefer Assets/Scenes/MainScene.unity, then the first scene found.
-        string preferred = "Assets/Scenes/MainScene.unity";
-        string scenePath = sceneGuids
-            .Select(AssetDatabase.GUIDToAssetPath)
-            .FirstOrDefault(p => p == preferred);
-
-        if (string.IsNullOrEmpty(scenePath))
-            scenePath = sceneGuids
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .OrderBy(p => p)
-                .First();
-
-        string outputDir = "build";
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "tegaris82.apk");
-
-        Debug.Log("=== Android build scene ===");
-        Debug.Log("Using scene: " + scenePath);
-        Debug.Log("Output: " + outputPath);
-
-        EditorUserBuildSettings.SwitchActiveBuildTarget(
-            BuildTargetGroup.Android,
-            BuildTarget.Android
-        );
-
-        BuildPlayerOptions options = new BuildPlayerOptions
-        {
-            scenes = new[] { scenePath },
-            locationPathName = outputPath,
+        Directory.CreateDirectory("build");
+        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
+            scenes = scenes,
+            locationPathName = Path.Combine("build", "tegaris82.apk"),
             target = BuildTarget.Android,
             options = BuildOptions.None
-        };
-
-        BuildReport report = BuildPipeline.BuildPlayer(options);
+        });
 
         if (report.summary.result != BuildResult.Succeeded)
-        {
-            throw new BuildFailedException(
-                "Android build failed: " + report.summary.result);
-        }
-
-        Debug.Log("=== Android APK build SUCCESS ===");
-        Debug.Log("APK: " + outputPath);
+            throw new BuildFailedException("Android build failed: " + report.summary.result);
     }
 }

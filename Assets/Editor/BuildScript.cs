@@ -8,18 +8,21 @@ public static class BuildScript
 {
     public static void BuildAndroid()
     {
-        string[] sceneGuids = AssetDatabase.FindAssets("t:Scene", new[] { "Assets/Scenes" });
-        var scenes = sceneGuids.Select(AssetDatabase.GUIDToAssetPath)
+        string[] guids = AssetDatabase.FindAssets("t:Scene");
+        string[] scenes = guids
+            .Select(AssetDatabase.GUIDToAssetPath)
             .Where(p => p.EndsWith(".unity"))
-            .OrderBy(p => p == "Assets/Scenes/MainMenu.unity" ? 0 : 1)
+            .Where(p => !p.Contains("/MainMenu.unity"))
+            .OrderBy(p => p == "Assets/Scenes/KaisarWorld.unity" ? 0 : 1)
             .ThenBy(p => p)
             .ToArray();
 
         if (scenes.Length == 0)
-            throw new BuildFailedException("No Unity scenes found under Assets/Scenes.");
+            throw new BuildFailedException("No Unity scene was found.");
 
         Directory.CreateDirectory("build");
-        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
+        BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+        {
             scenes = scenes,
             locationPathName = Path.Combine("build", "tegaris82.apk"),
             target = BuildTarget.Android,

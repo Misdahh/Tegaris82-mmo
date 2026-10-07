@@ -10,8 +10,31 @@ jobs:
     name: Build WebGL
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Restore Unity Library cache
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+            Library-
+
+      - name: Validate Unity secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          test -n "$UNITY_LICENSE" || { echo "ERROR: GitHub Secret UNITY_LICENSE is missing."; exit 1; }
+          test -n "$UNITY_EMAIL" || { echo "ERROR: GitHub Secret UNITY_EMAIL is missing."; exit 1; }
+          test -n "$UNITY_PASSWORD" || { echo "ERROR: GitHub Secret UNITY_PASSWORD is missing."; exit 1; }
+          echo "Unity activation secrets are present."
+
       - name: Build WebGL
         uses: game-ci/unity-builder@v4
         env:
@@ -23,9 +46,10 @@ jobs:
           unityVersion: 6000.0.43f1
           targetPlatform: WebGL
           buildsPath: build
+
       - name: Upload WebGL
         uses: actions/upload-artifact@v4
         with:
           name: tegaris82-webgl
-          path: build/**/*
+          path: build/**
           if-no-files-found: error

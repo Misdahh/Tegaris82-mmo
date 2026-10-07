@@ -7,11 +7,33 @@ on:
 
 jobs:
   build-android:
-    name: Build APK
+    name: Build Android APK
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Restore Unity Library cache
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Android-
+            Library-
+
+      - name: Validate Unity secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          test -n "$UNITY_LICENSE" || { echo "ERROR: GitHub Secret UNITY_LICENSE is missing."; exit 1; }
+          test -n "$UNITY_EMAIL" || { echo "ERROR: GitHub Secret UNITY_EMAIL is missing."; exit 1; }
+          test -n "$UNITY_PASSWORD" || { echo "ERROR: GitHub Secret UNITY_PASSWORD is missing."; exit 1; }
+          echo "Unity activation secrets are present."
 
       - name: Build Android APK
         uses: game-ci/unity-builder@v4
@@ -23,9 +45,7 @@ jobs:
           projectPath: .
           unityVersion: 6000.0.43f1
           targetPlatform: Android
-          buildMethod: UnityEditor.BuildPipeline.BuildPlayer
           buildsPath: build
-          customParameters: -quit -batchmode
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

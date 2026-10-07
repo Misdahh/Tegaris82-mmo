@@ -1,0 +1,401 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Kaisar MMO procedural humanoid"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "KaisarMuda",
+      "mesh": 0,
+      "skin": 0
+    },
+    {
+      "name": "root",
+      "translation": [
+        -0.0,
+        0,
+        0
+      ],
+      "children": [
+        2
+      ]
+    },
+    {
+      "name": "pelvis",
+      "translation": [
+        0,
+        1.0,
+        0
+      ],
+      "children": [
+        3,
+        13,
+        16
+      ]
+    },
+    {
+      "name": "spine",
+      "translation": [
+        0,
+        1.75,
+        0
+      ],
+      "children": [
+        4
+      ]
+    },
+    {
+      "name": "chest",
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "children": [
+        5,
+        7,
+        10
+      ]
+    },
+    {
+      "name": "neck",
+      "translation": [
+        0,
+        3.15,
+        0
+      ],
+      "children": [
+        6
+      ]
+    },
+    {
+      "name": "head",
+      "translation": [
+        0,
+        3.55,
+        0
+      ]
+    },
+    {
+      "name": "upper_arm.L",
+      "translation": [
+        -0.48,
+        2.65,
+        0
+      ],
+      "children": [
+        8
+      ]
+    },
+    {
+      "name": "forearm.L",
+      "translation": [
+        -1.0,
+        2.3,
+        0
+      ],
+      "children": [
+        9
+      ]
+    },
+    {
+      "name": "hand.L",
+      "translation": [
+        -1.35,
+        1.95,
+        0
+      ]
+    },
+    {
+      "name": "upper_arm.R",
+      "translation": [
+        0.48,
+        2.65,
+        0
+      ],
+      "children": [
+        11
+      ]
+    },
+    {
+      "name": "forearm.R",
+      "translation": [
+        1.0,
+        2.3,
+        0
+      ],
+      "children": [
+        12
+      ]
+    },
+    {
+      "name": "hand.R",
+      "translation": [
+        1.35,
+        1.95,
+        0
+      ]
+    },
+    {
+      "name": "thigh.L",
+      "translation": [
+        -0.28,
+        0.95,
+        0
+      ],
+      "children": [
+        14
+      ]
+    },
+    {
+      "name": "shin.L",
+      "translation": [
+        -0.3,
+        0.35,
+        0
+      ],
+      "children": [
+        15
+      ]
+    },
+    {
+      "name": "foot.L",
+      "translation": [
+        -0.3,
+        0.05,
+        0.15
+      ]
+    },
+    {
+      "name": "thigh.R",
+      "translation": [
+        0.28,
+        0.95,
+        0
+      ],
+      "children": [
+        17
+      ]
+    },
+    {
+      "name": "shin.R",
+      "translation": [
+        0.3,
+        0.35,
+        0
+      ],
+      "children": [
+        18
+      ]
+    },
+    {
+      "name": "foot.R",
+      "translation": [
+        0.3,
+        0.05,
+        0.15
+      ]
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "JOINTS_0": 2,
+            "WEIGHTS_0": 3
+          },
+          "indices": 4,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "skins": [
+    {
+      "inverseBindMatrices": 5,
+      "joints": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "skeleton": 1
+    }
+  ],
+  "materials": [
+    {
+      "name": "Kaisar Robe",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.08,
+          0.035,
+          0.06,
+          1
+        ],
+        "metallicFactor": 0.15,
+        "roughnessFactor": 0.62
+      }
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "kaisar_humanoid_rigged.bin",
+      "byteLength": 100848
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 17616,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 17616,
+      "byteLength": 17616,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 35232,
+      "byteLength": 11744,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 46976,
+      "byteLength": 23488,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 70464,
+      "byteLength": 29184,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 99648,
+      "byteLength": 1152
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 100800,
+      "byteLength": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 100812,
+      "byteLength": 36
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 1468,
+      "type": "VEC3",
+      "min": [
+        -1.5399999618530273,
+        -0.20000000298023224,
+        -0.6399999856948853
+      ],
+      "max": [
+        2.0120487213134766,
+        4.360000133514404,
+        0.6899999976158142
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 1468,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5123,
+      "count": 1468,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 1468,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5125,
+      "count": 7296,
+      "type": "SCALAR",
+      "min": 0,
+      "max": 1467
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 18,
+      "type": "MAT4"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    }
+  ],
+  "animations": [
+    {
+      "name": "Idle",
+      "samplers": [
+        {
+          "input": 6,
+          "output": 7,
+          "interpolation": "LINEAR"
+        }
+      ],
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 4,
+            "path": "translation"
+          }
+        }
+      ]
+    }
+  ]
+}

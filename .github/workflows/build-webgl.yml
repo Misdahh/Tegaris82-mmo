@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build WebGL
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build Android APK with Unity
+    name: Build WebGL with Unity
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -15,7 +15,7 @@ jobs:
         with:
           lfs: true
 
-      - name: Build Android APK with Unity
+      - name: Build WebGL with Unity
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -24,14 +24,14 @@ jobs:
         with:
           projectPath: .
           unityVersion: 6000.0.43f1
-          targetPlatform: Android
-          buildMethod: BuildScript.BuildAndroid
+          targetPlatform: WebGL
+          buildMethod: BuildScript.BuildWebGL
           buildsPath: build
 
-      - name: Upload APK
+      - name: Upload WebGL
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: tegaris82-android
-          path: build/tegaris82.apk
+          name: tegaris82-webgl
+          path: build/WebGL/**
           if-no-files-found: error

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -7,16 +8,13 @@ namespace KaisarMMO.UI
     {
         private static MainMenuController instance;
         private bool visible = true;
-        private const string GameSceneName = "KaisarWorld";
+        private bool loading;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
             if (instance != null) return;
-
-            // Only create the menu controller in the Main Menu.
-            if (SceneManager.GetActiveScene().name != "MainMenu")
-                return;
+            if (SceneManager.GetActiveScene().name != "MainMenu") return;
 
             var go = new GameObject("KaisarMMO_MainMenu");
             DontDestroyOnLoad(go);
@@ -46,6 +44,12 @@ namespace KaisarMMO.UI
 
             GUI.Label(new Rect(x, y - 145, w, 70), "KAISAR MMO", title);
 
+            if (loading)
+            {
+                GUI.Label(new Rect(x, y - 45, w, h), "MEMUAT GAMES...", title);
+                return;
+            }
+
             if (GUI.Button(new Rect(x, y - 45, w, h), "GAMES", button))
                 StartGame();
 
@@ -58,21 +62,51 @@ namespace KaisarMMO.UI
 
         private void StartGame()
         {
-            Debug.Log("GAMES button pressed. Loading KaisarWorld...");
+            if (loading) return;
 
-            int gameSceneIndex = SceneUtility.GetBuildIndexByScenePath(
-                "Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity");
+            Debug.Log("=== GAMES BUTTON PRESSED ===");
+            Debug.Log("Active scene: " + SceneManager.GetActiveScene().name);
+            Debug.Log("Build scene count: " + SceneManager.sceneCountInBuildSettings);
 
-            if (gameSceneIndex < 0)
+            // Do not depend on SceneUtility.GetBuildIndexByScenePath here.
+            // LoadScene by the scene name is simpler and uses Unity's build settings.
+            loading = true;
+            visible = false;
+            StartCoroutine(LoadGameScene());
+        }
+
+        private IEnumerator LoadGameScene()
+        {
+            const string sceneName = "KaisarWorld";
+
+            AsyncOperation operation = null;
+
+            try
             {
-                Debug.LogError(
-                    "KaisarWorld is NOT included in the Android build. " +
-                    "Expected scene: Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity");
-                return;
+                operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Could not start KaisarWorld load: " + e);
             }
 
-            visible = false;
-            SceneManager.LoadScene(gameSceneIndex, LoadSceneMode.Single);
+            if (operation == null)
+            {
+                Debug.LogError(
+                    "KaisarWorld could not be loaded. " +
+                    "Make sure Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity " +
+                    "is included in the Android build.");
+                loading = false;
+                visible = true;
+                yield break;
+            }
+
+            operation.allowSceneActivation = true;
+
+            while (!operation.isDone)
+                yield return null;
+
+            Debug.Log("=== KAISARWORLD LOADED ===");
         }
     }
 }

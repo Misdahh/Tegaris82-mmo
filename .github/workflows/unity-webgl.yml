@@ -51,6 +51,7 @@ jobs:
           projectPath: .
           unityVersion: 6000.0.43f1
           targetPlatform: WebGL
+          buildMethod: BuildScript.BuildWebGL
           buildsPath: build
           buildName: tegaris82-webgl
           versioning: Semantic

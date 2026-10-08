@@ -65,9 +65,9 @@ namespace KaisarMMO.UI
             if (GUI.Button(new Rect(x, y + 125, w, h), "EXIT", button))
                 Application.Quit();
 
-            // Extra Android touch fallback. This does not alter the menu appearance.
-            if (Event.current.type == EventType.TouchUp && gamesRect.Contains(Event.current.touch.position))
-                StartGame();
+            // GUI.Button already handles mouse and Android touch input.
+            // Do not access Event.current.touch here because Unity's IMGUI Event
+            // API does not expose a `touch` property in this Unity version.
         }
 
         private void StartGame()

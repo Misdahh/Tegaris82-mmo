@@ -46,7 +46,6 @@ public static class BuildScript
             "Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity"
         };
 
-        // Verify both required scenes exist before building.
         foreach (var scenePath in scenes)
         {
             if (!File.Exists(scenePath))

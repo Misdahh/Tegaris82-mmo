@@ -7,24 +7,30 @@ namespace KaisarMMO.UI
     public class MainMenuController : MonoBehaviour
     {
         private static MainMenuController instance;
-        private bool visible = true;
         private bool loading;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
-            if (instance != null) return;
             if (SceneManager.GetActiveScene().name != "MainMenu") return;
+            if (FindObjectOfType<MainMenuController>() != null) return;
 
             var go = new GameObject("KaisarMMO_MainMenu");
-            DontDestroyOnLoad(go);
             instance = go.AddComponent<MainMenuController>();
+        }
+
+        private void Awake()
+        {
+            if (instance != null && instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            instance = this;
         }
 
         private void OnGUI()
         {
-            if (!visible) return;
-
             float w = Mathf.Min(520f, Screen.width * 0.78f);
             float h = 70f;
             float x = (Screen.width - w) * 0.5f;
@@ -36,7 +42,6 @@ namespace KaisarMMO.UI
                 alignment = TextAnchor.MiddleCenter,
                 fontStyle = FontStyle.Bold
             };
-
             GUIStyle button = new GUIStyle(GUI.skin.button)
             {
                 fontSize = Mathf.Clamp(Screen.width / 32, 20, 34)
@@ -50,7 +55,8 @@ namespace KaisarMMO.UI
                 return;
             }
 
-            if (GUI.Button(new Rect(x, y - 45, w, h), "GAMES", button))
+            Rect gamesRect = new Rect(x, y - 45, w, h);
+            if (GUI.Button(gamesRect, "GAMES", button))
                 StartGame();
 
             if (GUI.Button(new Rect(x, y + 40, w, h), "SETTINGS", button))
@@ -58,52 +64,51 @@ namespace KaisarMMO.UI
 
             if (GUI.Button(new Rect(x, y + 125, w, h), "EXIT", button))
                 Application.Quit();
+
+            // Extra Android touch fallback. This does not alter the menu appearance.
+            if (Event.current.type == EventType.TouchUp && gamesRect.Contains(Event.current.touch.position))
+                StartGame();
         }
 
         private void StartGame()
         {
             if (loading) return;
-
-            Debug.Log("=== GAMES BUTTON PRESSED ===");
-            Debug.Log("Active scene: " + SceneManager.GetActiveScene().name);
-            Debug.Log("Build scene count: " + SceneManager.sceneCountInBuildSettings);
-
-            // Do not depend on SceneUtility.GetBuildIndexByScenePath here.
-            // LoadScene by the scene name is simpler and uses Unity's build settings.
             loading = true;
-            visible = false;
+            Debug.Log("=== GAMES BUTTON PRESSED ===");
             StartCoroutine(LoadGameScene());
         }
 
         private IEnumerator LoadGameScene()
         {
             const string sceneName = "KaisarWorld";
+            int index = SceneUtility.GetBuildIndexByScenePath("Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity");
+            Debug.Log("KaisarWorld build index = " + index);
 
-            AsyncOperation operation = null;
-
-            try
+            if (index < 0)
             {
-                operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError("Could not start KaisarWorld load: " + e);
-            }
-
-            if (operation == null)
-            {
-                Debug.LogError(
-                    "KaisarWorld could not be loaded. " +
-                    "Make sure Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity " +
-                    "is included in the Android build.");
+                Debug.LogError("KAISARWORLD NOT IN BUILD SETTINGS");
                 loading = false;
-                visible = true;
                 yield break;
             }
 
-            operation.allowSceneActivation = true;
+            AsyncOperation op = null;
+            try
+            {
+                op = SceneManager.LoadSceneAsync(index, LoadSceneMode.Single);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogException(ex);
+            }
 
-            while (!operation.isDone)
+            if (op == null)
+            {
+                loading = false;
+                yield break;
+            }
+
+            op.allowSceneActivation = true;
+            while (!op.isDone)
                 yield return null;
 
             Debug.Log("=== KAISARWORLD LOADED ===");

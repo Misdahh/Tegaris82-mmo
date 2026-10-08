@@ -21,6 +21,8 @@ public static class BuildScript
 
         Directory.CreateDirectory("build");
 
+        // The order here is intentional:
+        // 0 = MainMenu, 1 = KaisarWorld.
         BuildPlayerOptions options = new BuildPlayerOptions
         {
             scenes = scenes,
@@ -30,16 +32,14 @@ public static class BuildScript
         };
 
         UnityEngine.Debug.Log("=== ANDROID BUILD START ===");
-        UnityEngine.Debug.Log("Scene 0: " + scenes[0]);
-        UnityEngine.Debug.Log("Scene 1: " + scenes[1]);
+        UnityEngine.Debug.Log("Build scene 0: " + scenes[0]);
+        UnityEngine.Debug.Log("Build scene 1: " + scenes[1]);
 
         BuildReport report = BuildPipeline.BuildPlayer(options);
 
         if (report.summary.result != BuildResult.Succeeded)
-        {
             throw new BuildFailedException(
                 "Android build failed: " + report.summary.result);
-        }
 
         UnityEngine.Debug.Log("=== ANDROID BUILD SUCCESS ===");
         UnityEngine.Debug.Log("APK: build/tegaris82.apk");

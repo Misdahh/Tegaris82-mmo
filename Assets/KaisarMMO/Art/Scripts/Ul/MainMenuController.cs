@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,6 +7,7 @@ namespace KaisarMMO.UI
     {
         private static MainMenuController instance;
         private bool loading;
+        private string errorMessage = "";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
@@ -55,8 +55,7 @@ namespace KaisarMMO.UI
                 return;
             }
 
-            Rect gamesRect = new Rect(x, y - 45, w, h);
-            if (GUI.Button(gamesRect, "GAMES", button))
+            if (GUI.Button(new Rect(x, y - 45, w, h), "GAMES", button))
                 StartGame();
 
             if (GUI.Button(new Rect(x, y + 40, w, h), "SETTINGS", button))
@@ -65,53 +64,41 @@ namespace KaisarMMO.UI
             if (GUI.Button(new Rect(x, y + 125, w, h), "EXIT", button))
                 Application.Quit();
 
-            // GUI.Button already handles mouse and Android touch input.
-            // Do not access Event.current.touch here because Unity's IMGUI Event
-            // API does not expose a `touch` property in this Unity version.
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                GUI.color = Color.red;
+                GUI.Label(new Rect(x, y + 205, w, 80), errorMessage);
+                GUI.color = Color.white;
+            }
         }
 
         private void StartGame()
         {
             if (loading) return;
             loading = true;
+            errorMessage = "";
             Debug.Log("=== GAMES BUTTON PRESSED ===");
-            StartCoroutine(LoadGameScene());
-        }
 
-        private IEnumerator LoadGameScene()
-        {
-            const string sceneName = "KaisarWorld";
-            int index = SceneUtility.GetBuildIndexByScenePath("Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity");
-            Debug.Log("KaisarWorld build index = " + index);
-
-            if (index < 0)
-            {
-                Debug.LogError("KAISARWORLD NOT IN BUILD SETTINGS");
-                loading = false;
-                yield break;
-            }
-
-            AsyncOperation op = null;
+            // This project has a tiny runtime-generated world. A synchronous scene
+            // switch is intentionally used here: it removes the Android async
+            // loading state that previously left the menu stuck on "MEMUAT GAMES...".
             try
             {
-                op = SceneManager.LoadSceneAsync(index, LoadSceneMode.Single);
+                int index = SceneUtility.GetBuildIndexByScenePath(
+                    "Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity");
+
+                Debug.Log("KaisarWorld build index = " + index);
+                if (index < 0)
+                    throw new System.Exception("KaisarWorld belum masuk Build Settings.");
+
+                SceneManager.LoadScene(index, LoadSceneMode.Single);
             }
             catch (System.Exception ex)
             {
+                loading = false;
+                errorMessage = "Gagal membuka Games:\n" + ex.Message;
                 Debug.LogException(ex);
             }
-
-            if (op == null)
-            {
-                loading = false;
-                yield break;
-            }
-
-            op.allowSceneActivation = true;
-            while (!op.isDone)
-                yield return null;
-
-            Debug.Log("=== KAISARWORLD LOADED ===");
         }
     }
 }

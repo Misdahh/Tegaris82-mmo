@@ -16,8 +16,7 @@ public static class BuildScript
         foreach (string scene in scenes)
         {
             if (!File.Exists(scene))
-                throw new BuildFailedException(
-                    "Required scene not found: " + scene);
+                throw new BuildFailedException("Required scene not found: " + scene);
         }
 
         Directory.CreateDirectory("build");
@@ -31,6 +30,8 @@ public static class BuildScript
         };
 
         UnityEngine.Debug.Log("=== ANDROID BUILD START ===");
+        UnityEngine.Debug.Log("Scene 0: " + scenes[0]);
+        UnityEngine.Debug.Log("Scene 1: " + scenes[1]);
 
         BuildReport report = BuildPipeline.BuildPlayer(options);
 
@@ -41,5 +42,6 @@ public static class BuildScript
         }
 
         UnityEngine.Debug.Log("=== ANDROID BUILD SUCCESS ===");
+        UnityEngine.Debug.Log("APK: build/tegaris82.apk");
     }
 }

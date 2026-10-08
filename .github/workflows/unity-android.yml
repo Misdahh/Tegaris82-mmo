@@ -3,19 +3,21 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     name: Build Android APK with Unity
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           lfs: true
 
-      - name: Build Android APK with Unity
+      - name: Build Android APK
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -26,10 +28,8 @@ jobs:
           unityVersion: 6000.0.43f1
           targetPlatform: Android
           buildMethod: BuildScript.BuildAndroid
-          buildsPath: build
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: tegaris82-android

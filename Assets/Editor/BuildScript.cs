@@ -1,44 +1,11 @@
-using System;
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
-using UnityEngine;
 
 public static class BuildScript
 {
-    static string FindScene()
-    {
-        string[] paths = AssetDatabase.FindAssets("t:Scene")
-            .Select(AssetDatabase.GUIDToAssetPath)
-            .Where(p => !string.IsNullOrEmpty(p))
-            .ToArray();
-
-        if (paths.Length == 0)
-            throw new BuildFailedException("No Unity scenes were found under Assets.");
-
-        string[] preferred =
-        {
-            "Assets/KaisarMMO/Art/Scenes/MainMenu.unity",
-            "Assets/Scenes/MainMenu.unity",
-            "Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity",
-            "Assets/Scenes/KaisarWorld.unity"
-        };
-
-        foreach (var p in preferred)
-            if (paths.Contains(p))
-            {
-                Debug.Log("BuildScript selected scene: " + p);
-                return p;
-            }
-
-        var fallback = paths.OrderBy(p => p).First();
-        Debug.Log("BuildScript selected fallback scene: " + fallback);
-        return fallback;
-    }
-
-    static void Build(BuildTarget target, string output)
+    public static void BuildAndroid()
     {
         string[] scenes =
         {
@@ -46,43 +13,33 @@ public static class BuildScript
             "Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity"
         };
 
-        foreach (var scenePath in scenes)
+        foreach (string scene in scenes)
         {
-            if (!File.Exists(scenePath))
-                throw new BuildFailedException("Required scene not found: " + scenePath);
+            if (!File.Exists(scene))
+                throw new BuildFailedException(
+                    "Required scene not found: " + scene);
         }
 
-        Directory.CreateDirectory(Path.GetDirectoryName(output));
+        Directory.CreateDirectory("build");
 
-        var options = new BuildPlayerOptions
+        BuildPlayerOptions options = new BuildPlayerOptions
         {
             scenes = scenes,
-            locationPathName = output,
-            target = target,
+            locationPathName = "build/tegaris82.apk",
+            target = BuildTarget.Android,
             options = BuildOptions.None
         };
 
-        Debug.Log("=== BUILD START ===");
-        Debug.Log("Target: " + target);
-        Debug.Log("Scenes: MainMenu + KaisarWorld");
-        Debug.Log("Output: " + output);
+        UnityEngine.Debug.Log("=== ANDROID BUILD START ===");
 
         BuildReport report = BuildPipeline.BuildPlayer(options);
 
         if (report.summary.result != BuildResult.Succeeded)
-            throw new BuildFailedException("Build failed: " + report.summary.result);
+        {
+            throw new BuildFailedException(
+                "Android build failed: " + report.summary.result);
+        }
 
-        Debug.Log("=== BUILD SUCCESS ===");
-    }
-
-    public static void BuildWebGL()
-    {
-        Build(BuildTarget.WebGL, "build/WebGL");
-    }
-
-    public static void BuildAndroid()
-    {
-        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
-        Build(BuildTarget.Android, "build/tegaris82.apk");
+        UnityEngine.Debug.Log("=== ANDROID BUILD SUCCESS ===");
     }
 }

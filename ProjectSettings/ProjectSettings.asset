@@ -20,8 +20,8 @@ PlayerSettings:
   applicationIdentifier:
     Standalone: com.tegaris82.mmo
     Android: com.tegaris82.mmo
-  bundleVersion: 0.1.0
-  AndroidBundleVersionCode: 1
+  bundleVersion: 0.9.0
+  AndroidBundleVersionCode: 9
   AndroidMinSdkVersion: 26
   AndroidTargetSdkVersion: 35
   scriptingBackend:

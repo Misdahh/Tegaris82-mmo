@@ -9,16 +9,17 @@ namespace KaisarMMO.UI
         private bool loading;
         private string errorMessage = "";
         private string statusMessage = "";
-        private int trackedFingerId = -1;
-        private bool fingerStartedOnGames;
+
+        private const string MainMenuScene = "MainMenu";
+        private const string GameSceneName = "KaisarWorld";
+        private const string GameScenePath = "Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
-            if (SceneManager.GetActiveScene().name != "MainMenu") return;
+            if (SceneManager.GetActiveScene().name != MainMenuScene) return;
             if (FindObjectOfType<MainMenuController>() != null) return;
-            var go = new GameObject("KaisarMMO_MainMenu");
-            instance = go.AddComponent<MainMenuController>();
+            new GameObject("KaisarMMO_MainMenu").AddComponent<MainMenuController>();
         }
 
         private void Awake()
@@ -37,43 +38,8 @@ namespace KaisarMMO.UI
             float h = 70f;
             float x = (Screen.width - w) * 0.5f;
             float y = Screen.height * 0.50f;
-            return new Rect(x, y - 45f, w, h);
-        }
-
-        // Explicit Android touch fallback. IMGUI buttons normally synthesize mouse
-        // events for touch, but this ensures a tap still activates GAMES if they do not.
-        private void Update()
-        {
-            if (loading || SceneManager.GetActiveScene().name != "MainMenu") return;
-            if (Input.touchCount <= 0) return;
-
-            Rect games = GamesButtonRect();
-            for (int i = 0; i < Input.touchCount; i++)
-            {
-                Touch touch = Input.GetTouch(i);
-                Vector2 guiPoint = new Vector2(touch.position.x, Screen.height - touch.position.y);
-
-                if (touch.phase == TouchPhase.Began)
-                {
-                    if (games.Contains(guiPoint))
-                    {
-                        trackedFingerId = touch.fingerId;
-                        fingerStartedOnGames = true;
-                    }
-                }
-                else if (touch.fingerId == trackedFingerId &&
-                         (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled))
-                {
-                    bool activate = fingerStartedOnGames && touch.phase == TouchPhase.Ended && games.Contains(guiPoint);
-                    trackedFingerId = -1;
-                    fingerStartedOnGames = false;
-                    if (activate)
-                    {
-                        StartGame();
-                        return;
-                    }
-                }
-            }
+            // Match the visible GAMES button position on tall mobile screens.
+            return new Rect(x, y - 20f, w, h);
         }
 
         private void OnGUI()
@@ -82,45 +48,42 @@ namespace KaisarMMO.UI
             float h = 70f;
             float x = (Screen.width - w) * 0.5f;
             float y = Screen.height * 0.50f;
-
             GUIStyle title = new GUIStyle(GUI.skin.label)
             {
                 fontSize = Mathf.Clamp(Screen.width / 18, 28, 56),
                 alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Bold
+                fontStyle = FontStyle.Bold,
+                wordWrap = true
             };
             GUIStyle button = new GUIStyle(GUI.skin.button)
             {
-                fontSize = Mathf.Clamp(Screen.width / 32, 20, 34)
+                fontSize = Mathf.Clamp(Screen.width / 32, 20, 34),
+                wordWrap = true
             };
 
             GUI.Label(new Rect(x, y - 145, w, 70), "KAISAR MMO", title);
-
             if (loading)
             {
-                GUI.Label(new Rect(x, y - 45, w, h), "MEMUAT GAMES...", title);
-                GUI.Label(new Rect(x, y + 30, w, 45), "Mohon tunggu", button);
-                return;
+                GUI.Label(GamesButtonRect(), "MEMUAT GAMES...", button);
+                GUI.Label(new Rect(x, y + 55, w, 70), statusMessage, button);
+            }
+            else
+            {
+                if (GUI.Button(GamesButtonRect(), "GAMES", button)) StartGame();
+                if (GUI.Button(new Rect(x, y + 65, w, h), "SETTINGS", button))
+                    Debug.Log("Settings: existing game settings are unchanged.");
+                if (GUI.Button(new Rect(x, y + 150, w, h), "EXIT", button)) Application.Quit();
             }
 
-            if (GUI.Button(GamesButtonRect(), "GAMES", button))
-                StartGame();
-
-            if (GUI.Button(new Rect(x, y + 40, w, h), "SETTINGS", button))
-                Debug.Log("Settings: existing game settings are unchanged.");
-
-            if (GUI.Button(new Rect(x, y + 125, w, h), "EXIT", button))
-                Application.Quit();
-
-            if (!string.IsNullOrEmpty(statusMessage))
+            if (!string.IsNullOrEmpty(statusMessage) && !loading)
             {
                 GUI.color = Color.white;
-                GUI.Label(new Rect(x, y + 190, w, 36), statusMessage, button);
+                GUI.Label(new Rect(x, y + 235, w, 55), statusMessage, button);
             }
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 GUI.color = new Color(1f, 0.35f, 0.35f, 1f);
-                GUI.Label(new Rect(x, y + 225, w, 110), errorMessage, button);
+                GUI.Label(new Rect(x, y + 235, w, 120), errorMessage, button);
                 GUI.color = Color.white;
             }
         }
@@ -128,23 +91,44 @@ namespace KaisarMMO.UI
         private void StartGame()
         {
             if (loading) return;
+
+            Debug.Log("=== GAMES BUTTON ACTIVATED ===");
+            Debug.Log("Active scene: " + SceneManager.GetActiveScene().path);
+
+            int buildIndex = SceneUtility.GetBuildIndexByScenePath(GameScenePath);
+            Debug.Log("KaisarWorld build index: " + buildIndex);
+
+            if (buildIndex < 0)
+            {
+                loading = false;
+                errorMessage = "SCENE KAISARWORLD TIDAK ADA DI BUILD APK. Periksa BuildScript dan path scene.";
+                statusMessage = "Pemeriksaan scene gagal";
+                Debug.LogError(errorMessage);
+                return;
+            }
+
+            if (!Application.CanStreamedLevelBeLoaded(buildIndex))
+            {
+                loading = false;
+                errorMessage = "APK tidak dapat memuat scene KaisarWorld pada Build Index " + buildIndex + ".";
+                statusMessage = "Scene tidak dapat dimuat";
+                Debug.LogError(errorMessage);
+                return;
+            }
+
             loading = true;
             errorMessage = "";
-            statusMessage = "Membuka KaisarWorld...";
-            Debug.Log("=== GAMES BUTTON ACTIVATED ===");
-            Debug.Log("Current scene: " + SceneManager.GetActiveScene().name);
-
+            statusMessage = "Membuka dunia kerajaan...";
             try
             {
-                // Load by the scene's actual name rather than relying on a build index.
-                SceneManager.LoadScene("KaisarWorld", LoadSceneMode.Single);
+                // A synchronous load avoids a UI stuck in an unfinished async-loading state.
+                SceneManager.LoadScene(buildIndex, LoadSceneMode.Single);
             }
             catch (System.Exception ex)
             {
                 loading = false;
-                statusMessage = "";
-                errorMessage = "Gagal membuka KaisarWorld. Pastikan scene ikut APK.\n" + ex.Message;
-                Debug.LogError(errorMessage);
+                errorMessage = "Gagal membuka KaisarWorld: " + ex.Message;
+                statusMessage = "Pemuatan gagal";
                 Debug.LogException(ex);
             }
         }

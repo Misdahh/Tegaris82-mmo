@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 namespace KaisarMMO.UI
 {
@@ -14,22 +15,22 @@ namespace KaisarMMO.UI
         private const string GameSceneName = "KaisarWorld";
         private const string GameScenePath = "Assets/KaisarMMO/Art/Scenes/KaisarWorld.unity";
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Create()
-        {
-            if (SceneManager.GetActiveScene().name != MainMenuScene) return;
-            if (FindObjectOfType<MainMenuController>() != null) return;
-            new GameObject("KaisarMMO_MainMenu").AddComponent<MainMenuController>();
-        }
-
         private void Awake()
         {
+            // MainMenu.unity already contains this component. Do not create a second
+            // IMGUI controller at runtime; duplicate OnGUI calls can leave menu text
+            // visually stacked over the loading state.
             if (instance != null && instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
             instance = this;
+        }
+
+        private void OnDestroy()
+        {
+            if (instance == this) instance = null;
         }
 
         private Rect GamesButtonRect()
@@ -91,46 +92,61 @@ namespace KaisarMMO.UI
         private void StartGame()
         {
             if (loading) return;
+            loading = true;
+            errorMessage = "";
+            statusMessage = "Menyiapkan dunia kerajaan...";
+            StartCoroutine(LoadGameRoutine());
+        }
 
+        private IEnumerator LoadGameRoutine()
+        {
             Debug.Log("=== GAMES BUTTON ACTIVATED ===");
             Debug.Log("Active scene: " + SceneManager.GetActiveScene().path);
 
             int buildIndex = SceneUtility.GetBuildIndexByScenePath(GameScenePath);
             Debug.Log("KaisarWorld build index: " + buildIndex);
 
-            if (buildIndex < 0)
+            if (buildIndex < 0 || !Application.CanStreamedLevelBeLoaded(buildIndex))
             {
                 loading = false;
-                errorMessage = "SCENE KAISARWORLD TIDAK ADA DI BUILD APK. Periksa BuildScript dan path scene.";
+                errorMessage = "SCENE KAISARWORLD TIDAK DAPAT DIMUAT. Pastikan scene ada di Build Settings dan APK dibuat dari project v13.";
                 statusMessage = "Pemeriksaan scene gagal";
                 Debug.LogError(errorMessage);
-                return;
+                yield break;
             }
 
-            if (!Application.CanStreamedLevelBeLoaded(buildIndex))
-            {
-                loading = false;
-                errorMessage = "APK tidak dapat memuat scene KaisarWorld pada Build Index " + buildIndex + ".";
-                statusMessage = "Scene tidak dapat dimuat";
-                Debug.LogError(errorMessage);
-                return;
-            }
-
-            loading = true;
-            errorMessage = "";
-            statusMessage = "Membuka dunia kerajaan...";
+            statusMessage = "Memuat dunia kerajaan...";
+            AsyncOperation operation = null;
             try
             {
-                // A synchronous load avoids a UI stuck in an unfinished async-loading state.
-                SceneManager.LoadScene(buildIndex, LoadSceneMode.Single);
+                operation = SceneManager.LoadSceneAsync(buildIndex, LoadSceneMode.Single);
             }
             catch (System.Exception ex)
             {
                 loading = false;
-                errorMessage = "Gagal membuka KaisarWorld: " + ex.Message;
+                errorMessage = "Gagal memulai pemuatan: " + ex.Message;
                 statusMessage = "Pemuatan gagal";
                 Debug.LogException(ex);
+                yield break;
             }
+
+            if (operation == null)
+            {
+                loading = false;
+                errorMessage = "Unity tidak berhasil memulai pemuatan scene KaisarWorld.";
+                statusMessage = "Pemuatan gagal";
+                Debug.LogError(errorMessage);
+                yield break;
+            }
+
+            while (!operation.isDone)
+            {
+                statusMessage = "Memuat dunia kerajaan... " + Mathf.RoundToInt(operation.progress * 100f) + "%";
+                yield return null;
+            }
+
+            Debug.Log("KaisarWorld scene load completed.");
         }
+
     }
 }

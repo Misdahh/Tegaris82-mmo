@@ -26,6 +26,30 @@ namespace KaisarMMO.UI
                 return;
             }
             instance = this;
+            EnsureMenuCamera();
+        }
+
+        // The original MainMenu scene did not contain a Camera. On Android this can
+        // leave the app on a black screen after the Unity splash. Create a minimal
+        // background camera at runtime when the scene has none; IMGUI draws the menu.
+        private static void EnsureMenuCamera()
+        {
+            Camera existing = Camera.main;
+            if (existing != null) return;
+
+            GameObject cameraObject = new GameObject("Main Camera (Runtime Fallback)");
+            cameraObject.tag = "MainCamera";
+            Camera camera = cameraObject.AddComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.025f, 0.04f, 0.08f, 1f);
+            camera.cullingMask = 0;
+            camera.orthographic = true;
+            camera.orthographicSize = 5f;
+            camera.nearClipPlane = 0.1f;
+            camera.farClipPlane = 100f;
+            camera.transform.position = new Vector3(0f, 0f, -10f);
+            camera.transform.rotation = Quaternion.identity;
+            camera.targetDisplay = 0;
         }
 
         private void OnDestroy()
@@ -109,7 +133,7 @@ namespace KaisarMMO.UI
             if (buildIndex < 0 || !Application.CanStreamedLevelBeLoaded(buildIndex))
             {
                 loading = false;
-                errorMessage = "SCENE KAISARWORLD TIDAK DAPAT DIMUAT. Pastikan scene ada di Build Settings dan APK dibuat dari project v13.";
+                errorMessage = "SCENE KAISARWORLD TIDAK DAPAT DIMUAT. Pastikan scene ada di Build Settings dan build APK terbaru dari project ini.";
                 statusMessage = "Pemeriksaan scene gagal";
                 Debug.LogError(errorMessage);
                 yield break;
